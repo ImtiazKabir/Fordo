@@ -26,14 +26,39 @@ PRIVATE char *ReadEntireFile(register char const *const file) {
   NEQ(content = calloc(1u + size, sizeof(*content)), NULL);
   NEQ(fread(content, sizeof(*content), size, fp), 0);
   EQ(fclose(fp), 0);
+  content[size] = '\0';
 
   return content;
 }
 
+
+PRIVATE void AddUserToDB(
+  register sqlite3 *const db,
+  register char const *const username,
+  register char const *const password
+) {
+  auto sqlite3_stmt *stmt = NULL;
+  register char const *const script = ReadEntireFile("database/add_user.sql");
+
+  EQ(sqlite3_prepare_v2(db, script, -1, &stmt, NULL), SQLITE_OK);
+  sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+  sqlite3_bind_text(stmt, 2, password, -1, SQLITE_STATIC);
+
+  EQ(sqlite3_step(stmt), SQLITE_DONE);
+  imlog1(LOG_INFO, "Added username: %s", username);
+
+  sqlite3_finalize(stmt);
+  free((void *)script);
+}
+
+
 PRIVATE void start(void) {
-  register char *const content = ReadEntireFile("database/add_user.sql");
-  (void)printf("%s\n", content);
-  free(content);
+  auto sqlite3 *db = NULL;
+
+  EQ(sqlite3_open("database/fordo.db", &db), SQLITE_OK);
+  AddUserToDB(db, "John Doe", "paulan");
+
+  sqlite3_close(db);
 }
 
 
