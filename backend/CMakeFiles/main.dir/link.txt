@@ -1,0 +1,1 @@
+/usr/bin/cc -g -fsanitize=address,undefined,leak,null,alignment -Wl,--dependency-file,CMakeFiles/main.dir/link.d CMakeFiles/main.dir/src/main.c.o -o build/main   -L/home/imkabir/c_programming/improj/lib  -Wl,-rpath,/home/imkabir/c_programming/improj/lib -limlib

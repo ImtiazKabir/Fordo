@@ -1,0 +1,3 @@
+/home/imkabir/c_programming/improj/CMakeFiles/main.dir
+/home/imkabir/c_programming/improj/CMakeFiles/edit_cache.dir
+/home/imkabir/c_programming/improj/CMakeFiles/rebuild_cache.dir
