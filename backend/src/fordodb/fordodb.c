@@ -22,7 +22,14 @@ IM_DEFINE_RESULT(DBResult, int)
 
 struct FordoDB {
   sqlite3 *db;
+
   char const *add_user_script;
+  char const *add_user_todos_script;
+  char const *check_credentials_script;
+  char const *delete_todo_script;
+  char const *get_user_id_script;
+  char const *get_user_todos_script;
+  char const *toggle_todos_script;
 };
 
 struct IModLog db_logger = {
@@ -76,14 +83,29 @@ PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
   EQ(sqlite3_open(dbFilePath, &self->db), SQLITE_OK);
 
   imlog(LOG_INFO, "Reading scripts");
+
   NEQ(self->add_user_script = ReadEntireFile("database/add_user.sql"), NULL);
+  NEQ(self->add_user_todos_script = ReadEntireFile("database/add_user_todos.sql"), NULL);
+  NEQ(self->check_credentials_script = ReadEntireFile("database/check_credentials.sql"), NULL);
+  NEQ(self->get_user_id_script = ReadEntireFile("database/get_user_id.sql"), NULL);
+  NEQ(self->get_user_todos_script = ReadEntireFile("database/get_user_todos.sql"), NULL);
+  NEQ(self->toggle_todos_script = ReadEntireFile("database/toggle_todo.sql"), NULL);
+
   imlog(LOG_INFO, "Successfully read all scripts");
 }
 
 PRIVATE void __Destructor__(void *_self) {
   register struct FordoDB *const self = _self;
 
+  imlog(LOG_INFO, "Cleaning up database");
+
   free((void *)self->add_user_script);
+  free((void *)self->add_user_todos_script);
+  free((void *)self->check_credentials_script);
+  free((void *)self->get_user_id_script);
+  free((void *)self->get_user_todos_script);
+  free((void *)self->toggle_todos_script);
+
   EQ(sqlite3_close(self->db), SQLITE_OK);
 }
 
