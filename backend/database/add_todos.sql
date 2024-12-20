@@ -1,1 +1,1 @@
-INSERT INTO todos (user_id, text, is_done) VALUES (?, ?, 0)
+INSERT INTO todos (user_id, text) VALUES (?, ?)

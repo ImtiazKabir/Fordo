@@ -23,6 +23,8 @@ IM_DEFINE_RESULT(DBResult, int)
 struct FordoDB {
   sqlite3 *db;
 
+  char const *foreign_key_script;
+
   char const *add_user_script;
   char const *add_todos_script;
   char const *check_credentials_script;
@@ -73,6 +75,17 @@ PRIVATE struct ImStr *ErrorMessage(register sqlite3 *const db, register char con
   return str;
 }
 
+PRIVATE void EnableForeignKeyConstraint(register struct FordoDB const *const self) {
+  auto char *errmsg = NULL;
+  register sqlite3 *const db = self->db;
+  register char const *const script = self->foreign_key_script;
+
+  if (sqlite3_exec(db, script, NULL, NULL, &errmsg) != SQLITE_OK) {
+    imlogf1(LOG_WARN, stderr, "Failed to enable foreign key constraint: %s", errmsg);
+    sqlite3_free(errmsg);
+  }
+}
+
 PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
   register struct FordoDB *const self = _self;
   auto char const *dbFilePath = NULL;
@@ -84,6 +97,8 @@ PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
 
   imlog(LOG_INFO, "Reading scripts");
 
+  NEQ(self->foreign_key_script = ReadEntireFile("database/enable_foreign_key.sql"), NULL);
+
   NEQ(self->add_user_script = ReadEntireFile("database/add_user.sql"), NULL);
   NEQ(self->add_todos_script = ReadEntireFile("database/add_todos.sql"), NULL);
   NEQ(self->check_credentials_script = ReadEntireFile("database/check_credentials.sql"), NULL);
@@ -91,13 +106,16 @@ PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
   NEQ(self->get_todos_script = ReadEntireFile("database/get_todos.sql"), NULL);
   NEQ(self->toggle_todos_script = ReadEntireFile("database/toggle_todo.sql"), NULL);
 
-  imlog(LOG_INFO, "Successfully read all scripts");
+  imlog(LOG_INFO, "Enabling constraints");
+  EnableForeignKeyConstraint(self);
 }
 
 PRIVATE void __Destructor__(void *_self) {
   register struct FordoDB *const self = _self;
 
   imlog(LOG_INFO, "Cleaning up database");
+
+  free((void *)self->foreign_key_script);
 
   free((void *)self->add_user_script);
   free((void *)self->add_todos_script);
