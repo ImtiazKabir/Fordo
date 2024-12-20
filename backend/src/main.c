@@ -1,64 +1,23 @@
+#include "fordodb/fordodb.h"
+
 #include "imlib/imlog.h"
 #include "imlib/impanic.h"
 #include "imlib/imstdinc.h"
 #include "imlib/imerrno.h"
+#include "imlib/imoption.h"
+#include "imlib/imparam.h"
+#include "imlib/immem.h"
 
 #include <sqlite3.h>
+#include <stdio.h>
 #include <stdlib.h>
-
-PRIVATE size_t SizeOfFile(register FILE *const fp) {
-  register long size = 0u;
-
-  NEQ(fseek(fp, 0, SEEK_END), -1);
-  NEQ(size = ftell(fp), -1);
-  NEQ(fseek(fp, 0, SEEK_SET), -1);
-
-  return (size_t) size;
-}
-
-PRIVATE char *ReadEntireFile(register char const *const file) {
-  register FILE *fp = NULL;
-  register char *content = NULL;
-  register size_t size = 0;
-
-  NEQ(fp = fopen(file, "r"), NULL);
-  size = SizeOfFile(fp);
-  NEQ(content = calloc(1u + size, sizeof(*content)), NULL);
-  NEQ(fread(content, sizeof(*content), size, fp), 0);
-  EQ(fclose(fp), 0);
-  content[size] = '\0';
-
-  return content;
-}
-
-
-PRIVATE void AddUserToDB(
-  register sqlite3 *const db,
-  register char const *const username,
-  register char const *const password
-) {
-  auto sqlite3_stmt *stmt = NULL;
-  register char const *const script = ReadEntireFile("database/add_user.sql");
-
-  EQ(sqlite3_prepare_v2(db, script, -1, &stmt, NULL), SQLITE_OK);
-  sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
-  sqlite3_bind_text(stmt, 2, password, -1, SQLITE_STATIC);
-
-  EQ(sqlite3_step(stmt), SQLITE_DONE);
-  imlog1(LOG_INFO, "Added username: %s", username);
-
-  sqlite3_finalize(stmt);
-  free((void *)script);
-}
+#include <errno.h>
 
 
 PRIVATE void start(void) {
-  auto sqlite3 *db = NULL;
-
-  EQ(sqlite3_open("database/fordo.db", &db), SQLITE_OK);
-  AddUserToDB(db, "John Doe", "paulan");
-
-  sqlite3_close(db);
+  register struct FordoDB *const fordoDB = imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
+  FordoDB_AddUserToDB(fordoDB, "Irtiaz", "2005070");
+  imdel(fordoDB);
 }
 
 
@@ -66,6 +25,7 @@ PUBLIC int main(register int const argc, register char const *const *const argv)
   (void)argc;
   trace_target = argv[0];
   imclrerr();
+  errno = 0;
   start();
   return EXIT_SUCCESS;
 }
