@@ -246,6 +246,53 @@ PUBLIC struct DBResult FordoDB_AddTodo(
   return DBResult_Ok(DB_OK);
 }
 
+PUBLIC struct DBResult FordoDB_GetUserId(
+  register struct FordoDB *const self,
+  register char const *const username,
+  register int *const user_id
+) {
+  auto sqlite3_stmt *stmt = NULL;
+  register char const *const script = self->get_user_id_script;
+  register sqlite3 *const db = self->db;
+
+  if (sqlite3_prepare_v2(db, script, -1, &stmt, NULL) != SQLITE_OK) {
+    register struct ImStr *const errmsg = ErrorMessage(db, "Failed to prepare statement");
+    register struct ImError *const error = imnew(PrepareError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct DBResult result = DBResult_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  if (sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC) != SQLITE_OK) {
+    register struct ImStr *const errmsg = ErrorMessage(db, "Failed to bind username");
+    register struct ImError *const error = imnew(BindError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct DBResult result = DBResult_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  if (sqlite3_step(stmt) != SQLITE_ROW) {
+    register char const *const errmsg = "Username not found";
+    register struct ImError *const error = imnew(ExecuteError, 1u, PARAM_PTR, errmsg);
+    register struct DBResult result = DBResult_Err(error);
+    imlogf(LOG_ERROR, stderr, errmsg);
+
+    sqlite3_finalize(stmt);
+    return result;
+  }
+
+  *user_id = sqlite3_column_int(stmt, 0);
+
+  sqlite3_finalize(stmt);
+  return DBResult_Ok(DB_OK);
+}
+
 
 CLASS(FordoDB) {
   _FordoDB.size = sizeof(struct FordoDB);

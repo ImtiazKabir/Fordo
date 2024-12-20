@@ -41,6 +41,11 @@ PUBLIC struct DBResult FordoDB_AddTodo(
   register int const user_id,
   register char const *const text
 );
+PUBLIC struct DBResult FordoDB_GetUserId(
+  register struct FordoDB *const self,
+  register char const *const username,
+  register int *const user_id
+);
 
 #endif /* !FORDO_DB_H_ */
 

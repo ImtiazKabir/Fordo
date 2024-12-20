@@ -16,9 +16,16 @@
 
 PRIVATE void Start(void) {
   register struct FordoDB *const fordoDB = imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
+                
 
+  auto int user_id = 0;
+
+  /*
   DBResult_Unwrap(FordoDB_AddUser(fordoDB, "Ramanujan", "ramuuuujan"));
   DBResult_Unwrap(FordoDB_AddTodo(fordoDB, 1, "Go do math"));
+  */
+  DBResult_Unwrap(FordoDB_GetUserId(fordoDB, "amanujan", &user_id));
+  imlog1(LOG_INFO, "User Id: %d\n", user_id);
 
   imdel(fordoDB);
 }
