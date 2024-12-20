@@ -24,11 +24,11 @@ struct FordoDB {
   sqlite3 *db;
 
   char const *add_user_script;
-  char const *add_user_todos_script;
+  char const *add_todos_script;
   char const *check_credentials_script;
   char const *delete_todo_script;
   char const *get_user_id_script;
-  char const *get_user_todos_script;
+  char const *get_todos_script;
   char const *toggle_todos_script;
 };
 
@@ -85,10 +85,10 @@ PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
   imlog(LOG_INFO, "Reading scripts");
 
   NEQ(self->add_user_script = ReadEntireFile("database/add_user.sql"), NULL);
-  NEQ(self->add_user_todos_script = ReadEntireFile("database/add_user_todos.sql"), NULL);
+  NEQ(self->add_todos_script = ReadEntireFile("database/add_todos.sql"), NULL);
   NEQ(self->check_credentials_script = ReadEntireFile("database/check_credentials.sql"), NULL);
   NEQ(self->get_user_id_script = ReadEntireFile("database/get_user_id.sql"), NULL);
-  NEQ(self->get_user_todos_script = ReadEntireFile("database/get_user_todos.sql"), NULL);
+  NEQ(self->get_todos_script = ReadEntireFile("database/get_todos.sql"), NULL);
   NEQ(self->toggle_todos_script = ReadEntireFile("database/toggle_todo.sql"), NULL);
 
   imlog(LOG_INFO, "Successfully read all scripts");
@@ -100,16 +100,16 @@ PRIVATE void __Destructor__(void *_self) {
   imlog(LOG_INFO, "Cleaning up database");
 
   free((void *)self->add_user_script);
-  free((void *)self->add_user_todos_script);
+  free((void *)self->add_todos_script);
   free((void *)self->check_credentials_script);
   free((void *)self->get_user_id_script);
-  free((void *)self->get_user_todos_script);
+  free((void *)self->get_todos_script);
   free((void *)self->toggle_todos_script);
 
   EQ(sqlite3_close(self->db), SQLITE_OK);
 }
 
-PUBLIC struct DBResult FordoDB_AddUserToDB(
+PUBLIC struct DBResult FordoDB_AddUser(
   register struct FordoDB *const self,
   register char const *const username,
   register char const *const password
@@ -163,6 +163,66 @@ PUBLIC struct DBResult FordoDB_AddUserToDB(
   }
 
   imodlog(&db_logger, DB_INSERT, "Added username: %s\n", username);
+
+  sqlite3_finalize(stmt);
+  return DBResult_Ok(DB_OK);
+}
+
+
+PUBLIC struct DBResult FordoDB_AddTodo(
+  register struct FordoDB *const self,
+  register int const user_id,
+  register char const *const text
+) {
+  auto sqlite3_stmt *stmt = NULL;
+  register char const *const script = self->add_todos_script;
+  register sqlite3 *const db = self->db;
+
+  if (sqlite3_prepare_v2(db, script, -1, &stmt, NULL) != SQLITE_OK) {
+    register struct ImStr *const errmsg = ErrorMessage(db, "Failed to prepare statement");
+    register struct ImError *const error = imnew(PrepareError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct DBResult result = DBResult_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  if (sqlite3_bind_int(stmt, 1, user_id) != SQLITE_OK) {
+    register struct ImStr *const errmsg = ErrorMessage(db, "Failed to bind user id");
+    register struct ImError *const error = imnew(BindError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct DBResult result = DBResult_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  if (sqlite3_bind_text(stmt, 2, text, -1, SQLITE_STATIC) != SQLITE_OK) {
+    register struct ImStr *const errmsg = ErrorMessage(db, "Failed to bind todo text");
+    register struct ImError *const error = imnew(BindError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct DBResult result = DBResult_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    register struct ImStr *const errmsg = ErrorMessage(db, "Failed to execute statement");
+    register struct ImError *const error = imnew(ExecuteError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct DBResult result = DBResult_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  imodlog(&db_logger, DB_INSERT, "Added todo: %s for user: %d\n", text, user_id);
 
   sqlite3_finalize(stmt);
   return DBResult_Ok(DB_OK);

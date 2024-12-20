@@ -31,10 +31,15 @@ IM_DECLARE_ERROR(ExecuteError, DatabaseError)
 
 IM_DECLARE_RESULT(DBResult, int)
 
-PUBLIC struct DBResult FordoDB_AddUserToDB(
+PUBLIC struct DBResult FordoDB_AddUser(
     struct FordoDB *self,
     char const *username,
     char const *password
+);
+PUBLIC struct DBResult FordoDB_AddTodo(
+  register struct FordoDB *const self,
+  register int const user_id,
+  register char const *const text
 );
 
 #endif /* !FORDO_DB_H_ */
