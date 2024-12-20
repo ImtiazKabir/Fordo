@@ -14,9 +14,9 @@
 #include <errno.h>
 
 
-PRIVATE void start(void) {
+PRIVATE void Start(void) {
   register struct FordoDB *const fordoDB = imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
-  FordoDB_AddUserToDB(fordoDB, "Irtiaz", "2005070");
+  DBResult_Unwrap(FordoDB_AddUserToDB(fordoDB, "Ramanujan", "ramuuuujan"));
   imdel(fordoDB);
 }
 
@@ -26,7 +26,9 @@ PUBLIC int main(register int const argc, register char const *const *const argv)
   trace_target = argv[0];
   imclrerr();
   errno = 0;
-  start();
+  /* imlogsetmsk(0); */
+
+  Start();
   return EXIT_SUCCESS;
 }
 
