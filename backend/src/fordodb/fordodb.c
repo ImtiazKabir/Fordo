@@ -119,14 +119,33 @@ PRIVATE void __Destructor__(void *_self) {
 
   imlog(LOG_INFO, "Cleaning up database");
 
-  free((void *)self->foreign_key_script);
+  if (self->foreign_key_script != NULL) {
+    free((void *)self->foreign_key_script);
+  }
 
-  free((void *)self->add_user_script);
-  free((void *)self->add_todo_script);
-  free((void *)self->get_user_id_script);
-  free((void *)self->get_todos_script);
-  free((void *)self->delete_todo_script);
-  free((void *)self->toggle_todo_script);
+  if (self->add_user_script != NULL) {
+    free((void *)self->add_user_script);
+  }
+  
+  if (self->add_todo_script != NULL) {
+    free((void *)self->add_todo_script);
+  }
+
+  if (self->get_user_id_script != NULL) {
+    free((void *)self->get_user_id_script);
+  }
+
+  if (self->get_todos_script != NULL) {
+    free((void *)self->get_todos_script);
+  }
+
+  if (self->delete_todo_script != NULL) {
+    free((void *)self->delete_todo_script);
+  }
+
+  if (self->toggle_todo_script != NULL) {
+    free((void *)self->toggle_todo_script);
+  }
 
   EQ(sqlite3_close(self->db), SQLITE_OK);
 }
