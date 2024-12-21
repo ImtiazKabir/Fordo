@@ -19,12 +19,11 @@ PRIVATE void Start(void) {
   register int user_id = 0;
   register int todo_id = 0;
 
-  user_id = ImResInt_Unwrap(FordoDB_AddUser(db, "Prova", "firefly"));
+  user_id = ImResInt_Unwrap(FordoDB_AddUser(db, "Imtiaz", "imkabir"));
   todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "fly"));
   ImResVoid_Unwrap(FordoDB_DeleteTodo(db, todo_id));
-  todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "sing"));
-  ImResVoid_Unwrap(FordoDB_DeleteTodo(db, todo_id));
-
+  todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "die"));
+  ImResVoid_Unwrap(FordoDB_ToggleTodo(db, todo_id));
 
   imdel(db);
 }
