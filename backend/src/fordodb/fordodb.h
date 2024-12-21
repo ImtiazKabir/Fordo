@@ -25,10 +25,10 @@ IM_DECLARE_ERROR(PrepareError, DatabaseError)
 IM_DECLARE_ERROR(BindError, DatabaseError)
 IM_DECLARE_ERROR(ExecuteError, DatabaseError)
 
-PUBLIC struct ImResVoid FordoDB_AddUser(struct FordoDB *self,
+PUBLIC struct ImResInt FordoDB_AddUser(struct FordoDB *self,
                                         char const *username,
                                         char const *password);
-PUBLIC struct ImResVoid FordoDB_AddTodo(struct FordoDB *self, int const user_id,
+PUBLIC struct ImResInt FordoDB_AddTodo(struct FordoDB *self, int const user_id,
                                         char const *text);
 PUBLIC struct ImResInt FordoDB_GetUserId(struct FordoDB *self,
                                          char const *username,
