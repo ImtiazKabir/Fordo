@@ -106,6 +106,7 @@ PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
   NEQ(self->get_user_id_script = ReadEntireFile("database/get_user_id.sql"),
       NULL);
   NEQ(self->get_todos_script = ReadEntireFile("database/get_todos.sql"), NULL);
+  NEQ(self->delete_todo_script = ReadEntireFile("database/delete_todo.sql"), NULL);
   NEQ(self->toggle_todos_script = ReadEntireFile("database/toggle_todo.sql"),
       NULL);
 
@@ -124,6 +125,7 @@ PRIVATE void __Destructor__(void *_self) {
   free((void *)self->add_todo_script);
   free((void *)self->get_user_id_script);
   free((void *)self->get_todos_script);
+  free((void *)self->delete_todo_script);
   free((void *)self->toggle_todos_script);
 
   EQ(sqlite3_close(self->db), SQLITE_OK);
@@ -188,11 +190,12 @@ PUBLIC struct ImResInt FordoDB_AddUser(register struct FordoDB *const self,
     return result;
   }
 
-  imodlog(&db_logger, DB_INSERT, "Added username: %s\n", username);
-
-  sqlite3_finalize(stmt);
-
-  return ImResInt_Ok((int)sqlite3_last_insert_rowid(db));
+  {
+    register int const user_id = (int)sqlite3_last_insert_rowid(db);
+    imodlog(&db_logger, DB_INSERT, "Added username: %s as user %d\n", username, user_id);
+    sqlite3_finalize(stmt);
+    return ImResInt_Ok(user_id);
+  }
 }
 
 PUBLIC struct ImResInt FordoDB_AddTodo(register struct FordoDB *const self,
@@ -254,11 +257,14 @@ PUBLIC struct ImResInt FordoDB_AddTodo(register struct FordoDB *const self,
     return result;
   }
 
-  imodlog(&db_logger, DB_INSERT, "Added todo: %s for user: %d\n", text,
-          user_id);
+  {
+    register int const todo_id = (int)sqlite3_last_insert_rowid(db);
+    imodlog(&db_logger, DB_INSERT, "Added todo %d for user %d\n", todo_id,
+            user_id);
 
-  sqlite3_finalize(stmt);
-  return ImResInt_Ok((int)sqlite3_last_insert_rowid(db));
+    sqlite3_finalize(stmt);
+    return ImResInt_Ok(todo_id);
+  }
 }
 
 PUBLIC struct ImResInt FordoDB_GetUserId(register struct FordoDB *const self,
@@ -324,6 +330,58 @@ PUBLIC struct ImResInt FordoDB_GetUserId(register struct FordoDB *const self,
     return ImResInt_Ok(user_id);
   }
 }
+
+PUBLIC struct ImResVoid FordoDB_DeleteTodo(register struct FordoDB *const self,
+                                        register int const todo_id) {
+  auto sqlite3_stmt *stmt = NULL;
+  register char const *const script = self->delete_todo_script;
+  register sqlite3 *const db = self->db;
+
+  if (sqlite3_prepare_v2(db, script, -1, &stmt, NULL) != SQLITE_OK) {
+    register struct ImStr *const errmsg =
+        ErrorMessage(db, "Failed to prepare statement");
+    register struct ImError *const error =
+        imnew(PrepareError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct ImResVoid result = ImResVoid_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  if (sqlite3_bind_int(stmt, 1, todo_id) != SQLITE_OK) {
+    register struct ImStr *const errmsg =
+        ErrorMessage(db, "Failed to bind user id");
+    register struct ImError *const error =
+        imnew(BindError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct ImResVoid result = ImResVoid_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    register struct ImStr *const errmsg =
+        ErrorMessage(db, "Failed to execute statement");
+    register struct ImError *const error =
+        imnew(ExecuteError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct ImResVoid result = ImResVoid_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  imodlog(&db_logger, DB_DELETE, "Deleted todo id: %d\n", todo_id);
+
+  sqlite3_finalize(stmt);
+  return ImResVoid_Ok(DB_OK);
+}
+
 
 CLASS(FordoDB) {
   _FordoDB.size = sizeof(struct FordoDB);

@@ -9,18 +9,24 @@
 #include "imlib/imstdinc.h"
 
 #include <errno.h>
-#include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 PRIVATE void Start(void) {
-  register struct FordoDB *const fordoDB =
+  register struct FordoDB *const db =
       imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
 
-  register int const user_id = ImResInt_Unwrap(FordoDB_AddUser(fordoDB, "Imtiaz", "Kabir"));
-  imlog1(LOG_INFO, "User Id: %d", user_id);
+  register int user_id = 0;
+  register int todo_id = 0;
 
-  imdel(fordoDB);
+  user_id = ImResInt_Unwrap(FordoDB_AddUser(db, "Prova", "firefly"));
+  todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "fly"));
+  ImResVoid_Unwrap(FordoDB_DeleteTodo(db, todo_id));
+  todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "sing"));
+  ImResVoid_Unwrap(FordoDB_DeleteTodo(db, todo_id));
+
+
+  imdel(db);
 }
 
 PUBLIC int main(register int const argc,
