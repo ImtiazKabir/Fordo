@@ -23,7 +23,7 @@ struct FordoDB {
   char const *foreign_key_script;
 
   char const *add_user_script;
-  char const *add_todos_script;
+  char const *add_todo_script;
   char const *delete_todo_script;
   char const *get_user_id_script;
   char const *get_todos_script;
@@ -102,7 +102,7 @@ PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
       NULL);
 
   NEQ(self->add_user_script = ReadEntireFile("database/add_user.sql"), NULL);
-  NEQ(self->add_todos_script = ReadEntireFile("database/add_todos.sql"), NULL);
+  NEQ(self->add_todo_script = ReadEntireFile("database/add_todo.sql"), NULL);
   NEQ(self->get_user_id_script = ReadEntireFile("database/get_user_id.sql"),
       NULL);
   NEQ(self->get_todos_script = ReadEntireFile("database/get_todos.sql"), NULL);
@@ -121,7 +121,7 @@ PRIVATE void __Destructor__(void *_self) {
   free((void *)self->foreign_key_script);
 
   free((void *)self->add_user_script);
-  free((void *)self->add_todos_script);
+  free((void *)self->add_todo_script);
   free((void *)self->get_user_id_script);
   free((void *)self->get_todos_script);
   free((void *)self->toggle_todos_script);
@@ -198,7 +198,7 @@ PUBLIC struct ImResVoid FordoDB_AddTodo(register struct FordoDB *const self,
                                         register int const user_id,
                                         register char const *const text) {
   auto sqlite3_stmt *stmt = NULL;
-  register char const *const script = self->add_todos_script;
+  register char const *const script = self->add_todo_script;
   register sqlite3 *const db = self->db;
 
   if (sqlite3_prepare_v2(db, script, -1, &stmt, NULL) != SQLITE_OK) {
