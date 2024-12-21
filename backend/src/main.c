@@ -1,37 +1,34 @@
 #include "fordodb/fordodb.h"
 
-#include "imlib/imlog.h"
-#include "imlib/impanic.h"
-#include "imlib/imstdinc.h"
 #include "imlib/imerrno.h"
-#include "imlib/imoption.h"
-#include "imlib/imparam.h"
+#include "imlib/imlog.h"
 #include "imlib/immem.h"
+#include "imlib/imoption.h"
+#include "imlib/impanic.h"
+#include "imlib/imparam.h"
+#include "imlib/imstdinc.h"
 
+#include <errno.h>
 #include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-
 
 PRIVATE void Start(void) {
-  register struct FordoDB *const fordoDB = imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
-                
+  register struct FordoDB *const fordoDB =
+      imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
 
-  auto int user_id = 0;
-
-  /*
-  DBResult_Unwrap(FordoDB_AddUser(fordoDB, "Ramanujan", "ramuuuujan"));
-  DBResult_Unwrap(FordoDB_AddTodo(fordoDB, 1, "Go do math"));
-  */
-  DBResult_Unwrap(FordoDB_GetUserId(fordoDB, "amanujan", &user_id));
-  imlog1(LOG_INFO, "User Id: %d\n", user_id);
+  register int user_id = 0;
+  /* ImResVoid_Unwrap(FordoDB_AddUser(fordoDB, "Ramanujan", "ramuuuujan")); */
+  /* ImResVoid_Unwrap(FordoDB_AddTodo(fordoDB, 1, "Go do math")); */
+  user_id =
+      ImResInt_Unwrap(FordoDB_GetUserId(fordoDB, "Ramanujan", "ramuuuujan"));
+  imlog1(LOG_INFO, "User Id: %d", user_id);
 
   imdel(fordoDB);
 }
 
-
-PUBLIC int main(register int const argc, register char const *const *const argv) {
+PUBLIC int main(register int const argc,
+                register char const *const *const argv) {
   (void)argc;
   trace_target = argv[0];
   imclrerr();
@@ -41,4 +38,3 @@ PUBLIC int main(register int const argc, register char const *const *const argv)
   Start();
   return EXIT_SUCCESS;
 }
-
