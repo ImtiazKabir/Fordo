@@ -35,5 +35,6 @@ PUBLIC struct ImResInt FordoDB_GetUserId(struct FordoDB *self,
                                          char const *password);
 PUBLIC struct ImResVoid FordoDB_DeleteTodo(struct FordoDB *self, int todo_id);
 PUBLIC struct ImResVoid FordoDB_ToggleTodo(struct FordoDB *self, int todo_id);
+PUBLIC struct ImResPtr FordoDB_GetAllTodo(struct FordoDB *self, int user_id);
 
 #endif /* !FORDO_DB_H_ */

@@ -9,8 +9,12 @@
 #include "imlib/impanic.h"
 #include "imlib/imresult.h"
 #include "imlib/imstr.h"
+#include "imlib/list/ilist.h"
+#include "imlib/list/linkedlist.h"
 
 #include <sqlite3.h>
+
+#include "../model/todo.h"
 
 IM_DEFINE_ERROR(DatabaseError, DB_OK, "Internal database error")
 IM_DEFINE_ERROR(PrepareError, DB_PREP, "Could not prepare statement")
@@ -280,7 +284,7 @@ PUBLIC struct ImResInt FordoDB_GetUserId(register struct FordoDB *const self,
 
   RESULT_TRY(ImResVoid, PrepareStatement(db, script, &stmt), ImResInt);
   RESULT_TRY(ImResVoid, BindText(db, stmt, 1, username, "Failed to bind username"), ImResInt);
-  RESULT_TRY(ImResVoid, BindText(db, stmt, 1, password, "Failed to bind password"), ImResInt);
+  RESULT_TRY(ImResVoid, BindText(db, stmt, 2, password, "Failed to bind password"), ImResInt);
 
   if (sqlite3_step(stmt) != SQLITE_ROW) {
     register char const *const errmsg = "Invalid credentials";
@@ -328,6 +332,31 @@ PUBLIC struct ImResVoid FordoDB_ToggleTodo(register struct FordoDB *const self,
   imodlog(&db_logger, DB_UPDATE, "Toggled todo id: %d\n", todo_id);
   sqlite3_finalize(stmt);
   return ImResVoid_Ok(DB_OK);
+}
+
+PUBLIC struct ImResPtr FordoDB_GetAllTodo(register struct FordoDB *const self,
+                                          register int const user_id) {
+  auto sqlite3_stmt *stmt = NULL;
+  register char const *const script = self->get_todos_script;
+  register sqlite3 *const db = self->db;
+  register struct ImLinkedList *const todos = imnew(ImLinkedList, 0u);
+
+  RESULT_TRY(ImResVoid, PrepareStatement(db, script, &stmt), ImResPtr);
+  RESULT_TRY(ImResVoid, BindInt(db, stmt, 1, user_id, "Failed to bind todo_id"), ImResPtr);
+
+  ImIList_SetPolicy(todos, POLICY_TRANSFER);
+
+  while (sqlite3_step(stmt) == SQLITE_ROW) {
+    register int const id = sqlite3_column_int(stmt, 0);
+    register char const *const text = (char const *)sqlite3_column_text(stmt, 1);
+    register int const is_done = sqlite3_column_int(stmt, 2);
+    register struct Todo *todo = imnew(Todo, 3u, PARAM_INT, id, PARAM_PTR, text, PARAM_INT, is_done);
+    
+    ImIList_Append(todos, todo);
+  }
+
+  sqlite3_finalize(stmt);
+  return ImResPtr_Ok(todos);
 }
 
 

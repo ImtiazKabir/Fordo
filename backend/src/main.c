@@ -6,6 +6,9 @@
 #include "imlib/imparam.h"
 #include "imlib/imstdinc.h"
 #include "imlib/imio.h"
+#include "imlib/list/ilist.h"
+#include "imlib/list/iiter.h"
+#include "imlib/list/linkedlist.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -18,23 +21,48 @@ PRIVATE void Start(void) {
   register struct FordoDB *const db =
       imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
 
-  register int user_id = 0;
-  register int todo_id = 0;
+  {
+    register int user_id = 0;
+    register int todo_id = 0;
 
-  user_id = ImResInt_Unwrap(FordoDB_AddUser(db, "Imtiaz", "imkabir"));
-  todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "fly"));
-  ImResVoid_Unwrap(FordoDB_DeleteTodo(db, todo_id));
-  todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "die"));
-  ImResVoid_Unwrap(FordoDB_ToggleTodo(db, todo_id));
+    user_id = ImResInt_Unwrap(FordoDB_AddUser(db, "Imtiaz", "imkabir"));
+    todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "fly"));
+    ImResVoid_Unwrap(FordoDB_DeleteTodo(db, todo_id));
+    todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "die"));
+    ImResVoid_Unwrap(FordoDB_ToggleTodo(db, todo_id));
+    todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "hapi-hapi-hapi"));
+    todo_id = ImResInt_Unwrap(FordoDB_AddTodo(db, user_id, "hibijibi"));
+    ImResVoid_Unwrap(FordoDB_ToggleTodo(db, todo_id));
+  }
+
+  {
+    register int user_id = 0;
+    register struct ImLinkedList *todos = NULL;
+    register struct ImLLIter *iter = NULL;
+
+    user_id = ImResInt_Unwrap(FordoDB_GetUserId(db, "Imtiaz", "imkabir"));
+    todos = ImResPtr_Unwrap(FordoDB_GetAllTodo(db, user_id));
+
+    iter = imnew(ImLLIter, 1u, PARAM_PTR, todos);
+    while (IM_TRUE) {
+      register struct ImOptPtr const nxt = ImIIter_Next(iter);
+      if (ImOptPtr_IsNone(nxt) != IM_FALSE) {
+        break;
+      } else {
+        register struct Todo *const todo = ImOptPtr_Unwrap(nxt);
+        imputobj(todo, stdout);
+        fputc('\n', stdout);
+      }
+    }
+
+    imdel(iter);
+    imdel(todos);
+  }
 
   imdel(db);
 }
 
-PRIVATE void Debug(void) {
-  register struct Todo *const todo = imnew(Todo, 3u, PARAM_INT, 4, PARAM_PTR, "Hello", PARAM_INT, 1);
-  imputobj(todo, stdout);
-  imdel(todo);
-}
+
 
 PUBLIC int main(register int const argc,
                 register char const *const *const argv) {
@@ -44,7 +72,7 @@ PUBLIC int main(register int const argc,
   errno = 0;
   /* imlogsetmsk(0); */
 
-  /* Start(); */
-  Debug();
+  Start();
+
   return EXIT_SUCCESS;
 }
