@@ -86,9 +86,13 @@ EnableForeignKeyConstraint(register struct FordoDB const *const self) {
   }
 }
 
-PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
+PRIVATE void __Constructor__(register void *const _self, register struct ImParams *const args) {
   register struct FordoDB *const self = _self;
   auto char const *dbFilePath = NULL;
+
+  if (ImParams_Match(args, 1u, PARAM_PTR) == IM_FALSE) {
+    impanic("FordoDB constructor takes (char const *)");
+  }
 
   ImParams_Extract(args, &dbFilePath);
   imlog1(LOG_INFO, "Constructing the database from %s", dbFilePath);
@@ -114,7 +118,7 @@ PRIVATE void __Constructor__(void *_self, struct ImParams *args) {
   EnableForeignKeyConstraint(self);
 }
 
-PRIVATE void __Destructor__(void *_self) {
+PRIVATE void __Destructor__(register void *const _self) {
   register struct FordoDB *const self = _self;
 
   imlog(LOG_INFO, "Cleaning up database");

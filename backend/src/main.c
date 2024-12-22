@@ -1,5 +1,3 @@
-#include "fordodb/fordodb.h"
-
 #include "imlib/imerrno.h"
 #include "imlib/imlog.h"
 #include "imlib/immem.h"
@@ -7,10 +5,14 @@
 #include "imlib/impanic.h"
 #include "imlib/imparam.h"
 #include "imlib/imstdinc.h"
+#include "imlib/imio.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "fordodb/fordodb.h"
+#include "model/todo.h"
 
 PRIVATE void Start(void) {
   register struct FordoDB *const db =
@@ -28,6 +30,12 @@ PRIVATE void Start(void) {
   imdel(db);
 }
 
+PRIVATE void Debug(void) {
+  register struct Todo *const todo = imnew(Todo, 3u, PARAM_INT, 4, PARAM_PTR, "Hello", PARAM_INT, 1);
+  imputobj(todo, stdout);
+  imdel(todo);
+}
+
 PUBLIC int main(register int const argc,
                 register char const *const *const argv) {
   (void)argc;
@@ -36,6 +44,7 @@ PUBLIC int main(register int const argc,
   errno = 0;
   /* imlogsetmsk(0); */
 
-  Start();
+  /* Start(); */
+  Debug();
   return EXIT_SUCCESS;
 }
