@@ -190,6 +190,26 @@ PRIVATE struct ImResVoid BindText(register sqlite3 *const db,
   return ImResVoid_Ok(DB_OK);
 }
 
+PRIVATE struct ImResVoid BindInt(register sqlite3 *const db,
+                                 register sqlite3_stmt *const stmt,
+                                 register int const index,
+                                 register int const num) {
+  if (sqlite3_bind_int(stmt, index, num) != SQLITE_OK) {
+    register struct ImStr *const errmsg =
+        ErrorMessage(db, "Failed to bind int");
+    register struct ImError *const error =
+        imnew(BindError, 1u, PARAM_PTR, ImStr_View(errmsg));
+    register struct ImResVoid result = ImResVoid_Err(error);
+    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+
+    sqlite3_finalize(stmt);
+    imdel(errmsg);
+    return result;
+  }
+
+  return ImResVoid_Ok(DB_OK);
+}
+
 PRIVATE struct ImResVoid ExecStatement(register struct sqlite3 *const db,
                                   register sqlite3_stmt *const stmt) {
   if (sqlite3_step(stmt) != SQLITE_DONE) {
@@ -234,67 +254,17 @@ PUBLIC struct ImResInt FordoDB_AddTodo(register struct FordoDB *const self,
   auto sqlite3_stmt *stmt = NULL;
   register char const *const script = self->add_todo_script;
   register sqlite3 *const db = self->db;
+  register int todo_id = 0;
 
-  if (sqlite3_prepare_v2(db, script, -1, &stmt, NULL) != SQLITE_OK) {
-    register struct ImStr *const errmsg =
-        ErrorMessage(db, "Failed to prepare statement");
-    register struct ImError *const error =
-        imnew(PrepareError, 1u, PARAM_PTR, ImStr_View(errmsg));
-    register struct ImResInt result = ImResInt_Err(error);
-    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+  RESULT_TRY(ImResVoid, PrepareStatement(db, script, &stmt), ImResInt);
+  RESULT_TRY(ImResVoid, BindInt(db, stmt, 1, user_id), ImResInt);
+  RESULT_TRY(ImResVoid, BindText(db, stmt, 2, text), ImResInt);
+  RESULT_TRY(ImResVoid, ExecStatement(db, stmt), ImResInt);
 
-    sqlite3_finalize(stmt);
-    imdel(errmsg);
-    return result;
-  }
-
-  if (sqlite3_bind_int(stmt, 1, user_id) != SQLITE_OK) {
-    register struct ImStr *const errmsg =
-        ErrorMessage(db, "Failed to bind user id");
-    register struct ImError *const error =
-        imnew(BindError, 1u, PARAM_PTR, ImStr_View(errmsg));
-    register struct ImResInt result = ImResInt_Err(error);
-    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
-
-    sqlite3_finalize(stmt);
-    imdel(errmsg);
-    return result;
-  }
-
-  if (sqlite3_bind_text(stmt, 2, text, -1, SQLITE_STATIC) != SQLITE_OK) {
-    register struct ImStr *const errmsg =
-        ErrorMessage(db, "Failed to bind todo text");
-    register struct ImError *const error =
-        imnew(BindError, 1u, PARAM_PTR, ImStr_View(errmsg));
-    register struct ImResInt result = ImResInt_Err(error);
-    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
-
-    sqlite3_finalize(stmt);
-    imdel(errmsg);
-    return result;
-  }
-
-  if (sqlite3_step(stmt) != SQLITE_DONE) {
-    register struct ImStr *const errmsg =
-        ErrorMessage(db, "Failed to execute statement");
-    register struct ImError *const error =
-        imnew(ExecuteError, 1u, PARAM_PTR, ImStr_View(errmsg));
-    register struct ImResInt result = ImResInt_Err(error);
-    imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
-
-    sqlite3_finalize(stmt);
-    imdel(errmsg);
-    return result;
-  }
-
-  {
-    register int const todo_id = (int)sqlite3_last_insert_rowid(db);
-    imodlog(&db_logger, DB_INSERT, "Added todo %d for user %d\n", todo_id,
-            user_id);
-
-    sqlite3_finalize(stmt);
-    return ImResInt_Ok(todo_id);
-  }
+  todo_id = (int)sqlite3_last_insert_rowid(db);
+  imodlog(&db_logger, DB_INSERT, "Added todo %d for user %d\n", todo_id, user_id);
+  sqlite3_finalize(stmt);
+  return ImResInt_Ok(todo_id);
 }
 
 PUBLIC struct ImResInt FordoDB_GetUserId(register struct FordoDB *const self,
