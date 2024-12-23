@@ -16,9 +16,9 @@
 
 #include "../model/todo.h"
 
-IM_DEFINE_ERROR(DatabaseError, DB_OK, "Internal database error")
+IM_DEFINE_ERROR(DatabaseError, DB_ERR, "Internal database error")
 IM_DEFINE_ERROR(PrepareError, DB_PREP, "Could not prepare statement")
-IM_DEFINE_ERROR(BindError, DB_PREP, "Could not bind variable")
+IM_DEFINE_ERROR(BindError, DB_BIND, "Could not bind variable")
 IM_DEFINE_ERROR(ExecuteError, DB_EXEC, "Could not execute statement")
 
 struct FordoDB {

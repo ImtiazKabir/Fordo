@@ -16,8 +16,9 @@
 
 #include "fordodb/fordodb.h"
 #include "model/todo.h"
+#include "server/server.h"
 
-PRIVATE void Start(void) {
+PRIVATE void DBDebug(void) {
   register struct FordoDB *const db =
       imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
 
@@ -62,6 +63,14 @@ PRIVATE void Start(void) {
   imdel(db);
 }
 
+PRIVATE void ServerDebug(void) {
+  register struct Server *const server = imnew(Server, 2u, PARAM_PTR, "0.0.0.0",
+                                               PARAM_UNSIGNED_SHORT, 3000u);
+
+  ImResVoid_Unwrap(Server_Listen(server));
+
+  imdel(server);
+}
 
 
 PUBLIC int main(register int const argc,
@@ -72,7 +81,8 @@ PUBLIC int main(register int const argc,
   errno = 0;
   /* imlogsetmsk(0); */
 
-  Start();
+  /* DBDebug(); */
+  ServerDebug();
 
   return EXIT_SUCCESS;
 }
