@@ -1,13 +1,13 @@
+#include "imlib/iiter.h"
 #include "imlib/imerrno.h"
+#include "imlib/imio.h"
 #include "imlib/imlog.h"
 #include "imlib/immem.h"
 #include "imlib/imoption.h"
 #include "imlib/impanic.h"
 #include "imlib/imparam.h"
 #include "imlib/imstdinc.h"
-#include "imlib/imio.h"
 #include "imlib/list/ilist.h"
-#include "imlib/list/iiter.h"
 #include "imlib/list/linkedlist.h"
 
 #include <errno.h>
@@ -64,14 +64,13 @@ PRIVATE void DBDebug(void) {
 }
 
 PRIVATE void ServerDebug(void) {
-  register struct Server *const server = imnew(Server, 2u, PARAM_PTR, "0.0.0.0",
-                                               PARAM_UNSIGNED_SHORT, 3000u);
+  register struct Server *const server =
+      imnew(Server, 2u, PARAM_PTR, "0.0.0.0", PARAM_UNSIGNED_SHORT, 3000u);
 
   ImResVoid_Unwrap(Server_Listen(server));
 
   imdel(server);
 }
-
 
 PUBLIC int main(register int const argc,
                 register char const *const *const argv) {
