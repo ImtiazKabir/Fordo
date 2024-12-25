@@ -13,10 +13,13 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include "fordodb/fordodb.h"
 #include "model/todo.h"
 #include "server/server.h"
+
+static struct Server *server = NULL;
 
 PRIVATE void DBDebug(void) {
   register struct FordoDB *const db =
@@ -64,13 +67,18 @@ PRIVATE void DBDebug(void) {
 }
 
 PRIVATE void ServerDebug(void) {
-  register struct Server *const server =
-      imnew(Server, 2u, PARAM_PTR, "0.0.0.0", PARAM_UNSIGNED_SHORT, 3000u);
+  server = imnew(Server, 2u, PARAM_PTR, "0.0.0.0", PARAM_UNSIGNED_SHORT, 3000u);
 
   ImResVoid_Unwrap(Server_Listen(server));
 
-  imdel(server);
+  (void)imdel(server);
 }
+
+PRIVATE void InterruptHandler(register int const signal_num) { 
+  (void)signal_num;
+  (void)imdel(server);
+  exit(EXIT_SUCCESS);
+} 
 
 PUBLIC int main(register int const argc,
                 register char const *const *const argv) {
@@ -78,6 +86,9 @@ PUBLIC int main(register int const argc,
   trace_target = argv[0];
   imclrerr();
   errno = 0;
+
+  signal(SIGINT, InterruptHandler); 
+
   /* imlogsetmsk(0); */
 
   /* DBDebug(); */

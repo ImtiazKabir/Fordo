@@ -21,6 +21,7 @@
 #include "imlib/imstr.h"
 
 #include "../request/request.h"
+#include "../response/response.h"
 
 IM_DEFINE_ERROR(ServerError, SERR_ERR, "Internal server error")
 IM_DEFINE_ERROR(ListenError, SERR_LISTEN, "Listen error")
@@ -174,6 +175,21 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
     {
       register struct HttpRequest *const request = imnew(HttpRequest, 1u, PARAM_PTR, buffer);
       (void)imdel(request);
+    }
+
+    {
+      register struct HttpResponse *const response = imnew(HttpResponse, 0u);
+      register char const *res = NULL;
+
+      HttpResponse_AddHeaderCstr(response, "Content-Type", "text/plain");
+      ImStr_Append(HttpResponse_GetBody(response), "Hello world");
+      HttpResponse_Finalize(response);
+      res = imtostr(response);
+      (void)imdel(response);
+
+      imodlog(&s_logger, SLOG_RESPONSE, "\n%s\n", res);
+      write(self->client_socket, res, strlen(res));
+      (void)imfree((void *)res);
     }
 
     if (client_ip[0] != '\0') {

@@ -12,8 +12,18 @@
 #include "imlib/imstr.h"
 #include "imlib/map/imap.h"
 #include "imlib/map/chainmap.h"
+#include "imlib/imoption.h"
 
 #include "picohttpparser.h"
+
+
+struct HttpRequest {
+  char const *method;
+  char const *path;
+  int minor_version;
+  void *header_map;
+  char const *body;
+};
 
 PRIVATE char const *GetCString(register char const *const str,
                                register size_t const len) {
@@ -78,7 +88,7 @@ PRIVATE void __Constructor__(register void *const _self, register struct ImParam
   auto char const *request = NULL;
 
   if (ImParams_Match(args, 1u, PARAM_PTR) == IM_FALSE) {
-    impanic("Request constructor takes (char *)");
+    impanic("HttpRequest constructor takes (char *)");
   }
 
   ImParams_Extract(args, &request);
@@ -102,6 +112,28 @@ PRIVATE void Deinit(register struct HttpRequest *const self) {
 PRIVATE void __Destructor__(register void *const _self) {
   register struct HttpRequest *const self = _self;
   Deinit(self);
+}
+
+PUBLIC char const *GetMethod(register struct HttpRequest const *const self) {
+  return self->method;
+}
+
+PUBLIC char const *GetPath(register struct HttpRequest const *const self) {
+  return self->path;
+}
+
+PUBLIC int GetMinorVersion(register struct HttpRequest const *const self) {
+  return self->minor_version;
+}
+
+PUBLIC struct ImOptPtr GetHeaderValueFromKey(
+  register struct HttpRequest const *const self,
+  register struct ImStr const *const key) {
+  return ImIMap_Get(self->header_map, key);
+}
+
+PUBLIC char const *GetBody(register struct HttpRequest const *const self) {
+  return self->body;
 }
 
 CLASS(HttpRequest) {
