@@ -20,6 +20,8 @@
 #include "imlib/imlog.h"
 #include "imlib/imstr.h"
 
+#include "../request/request.h"
+
 IM_DEFINE_ERROR(ServerError, SERR_ERR, "Internal server error")
 IM_DEFINE_ERROR(ListenError, SERR_LISTEN, "Listen error")
 IM_DEFINE_ERROR(AcceptError, SERR_ACCEPT, "Accept error")
@@ -168,6 +170,11 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
     }
 
     imodlog(&s_logger, SLOG_REQUEST, "\n%s\n", buffer);
+    imodlog(&s_logger, SLOG_REQUEST, "Parsing the request\n");
+    {
+      register struct HttpRequest *const request = imnew(HttpRequest, 1u, PARAM_PTR, buffer);
+      (void)imdel(request);
+    }
 
     if (client_ip[0] != '\0') {
       imodlog(&s_logger, SLOG_CLOSE, "IP: %s, PORT: %d\n", client_ip, client_port);
