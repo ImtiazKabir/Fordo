@@ -27,6 +27,8 @@ IM_DECLARE_ERROR(AcceptError, ServerError)
 IM_DECLARE_ERROR(RequestError, ServerError)
 IM_DECLARE_ERROR(ResponseError, ServerError)
 
+PUBLIC void Server_SetHandlerChain(struct Server *self, void *chain);
+PUBLIC void *Server_GetHandlerChain(struct Server *self);
 PUBLIC struct ImResVoid Server_Listen(struct Server *self);
 
 #endif /* !SERVER_H_ */

@@ -1,4 +1,4 @@
-#include "final_handler.h"
+#include "file_handler.h"
 
 #include "ihandler.h"
 
@@ -13,6 +13,7 @@
 #include "imlib/imparam.h"
 #include "imlib/imstdinc.h"
 #include "imlib/imstr.h"
+#include "imlib/imoption.h"
 
 #include "../http_mimes/http_mimes.h"
 #include "../request/request.h"
@@ -25,16 +26,16 @@ PRIVATE char *__dupstr__(register char const *const src) {
 
 PRIVATE void __Constructor__(register void *const _self,
                              register struct ImParams *const args) {
-  register struct FinalHttpHandler *const self = _self;
+  register struct FileHttpHandler *const self = _self;
   if (ImParams_Match(args, 1u, PARAM_PTR) == IM_FALSE) {
-    impanic("FinalHttpHandler Constructor takes (char const *)");
+    impanic("FileHttpHandler Constructor takes (char const *)");
   }
   ImParams_Extract(args, &self->public_path);
   self->public_path = __dupstr__(self->public_path);
 }
 
 PRIVATE void __Destructor__(register void *const _self) {
-  register struct FinalHttpHandler *const self = _self;
+  register struct FileHttpHandler *const self = _self;
   imfree((void *)self->public_path);
 }
 
@@ -47,10 +48,10 @@ PRIVATE void GenerateFileResponse(register struct HttpResponse *const response,
   imfree((void *)file_content);
 }
 
-PRIVATE struct HttpResponse *
+PRIVATE struct ImOptPtr
 __Handle__(register void *const _self,
            register struct HttpRequest *const request) {
-  register struct FinalHttpHandler *const self = _self;
+  register struct FileHttpHandler *const self = _self;
   register struct HttpResponse *const response = imnew(HttpResponse, 0u);
   register struct ImStr *const path =
       imnew(ImStr, 1u, PARAM_PTR, self->public_path);
@@ -64,29 +65,27 @@ __Handle__(register void *const _self,
 
   if (access(ImStr_View(path), F_OK) == 0) {
     GenerateFileResponse(response, ImStr_View(path));
-    goto resclear;
+    (void)imdel(path);
+    return ImOptPtr_Some(response);
   }
 
   ImStr_Append(path, ".htm");
   if (access(ImStr_View(path), F_OK) == 0) {
     GenerateFileResponse(response, ImStr_View(path));
-    goto resclear;
+    (void)imdel(path);
+    return ImOptPtr_Some(response);
   }
 
   ImStr_Append(path, "l");
   if (access(ImStr_View(path), F_OK) == 0) {
     GenerateFileResponse(response, ImStr_View(path));
-    goto resclear;
+    (void)imdel(path);
+    return ImOptPtr_Some(response);
   }
 
-  HttpResponse_SetStatusCode(response, HTTP_STATUS_NOT_FOUND);
-  HttpResponse_SetMimeType(response, MIME_TEXT_HTML);
-  ImStr_Append(HttpResponse_GetBody(response), "<h1>404 NOT FOUND</h1>");
-  HttpResponse_Finalize(response);
-
-resclear:
   (void)imdel(path);
-  return response;
+  (void)imdel(response);
+  return ImOptPtr_None();
 }
 
 PRIVATE void __InterfaceImplementation__(register void *const interface) {
@@ -94,13 +93,13 @@ PRIVATE void __InterfaceImplementation__(register void *const interface) {
     register struct HttpHandler *const handler_interface = interface;
     handler_interface->handle = __Handle__;
   } else {
-    impanic("FinalHttpHandler does not implement %s\n", imtype(interface));
+    impanic("FileHttpHandler does not implement %s\n", imtype(interface));
   }
 }
 
-CLASS(FinalHttpHandler) {
-  _FinalHttpHandler.size = sizeof(struct FinalHttpHandler);
-  _FinalHttpHandler.ctor = __Constructor__;
-  _FinalHttpHandler.dtor = __Destructor__;
-  _FinalHttpHandler.implof = __InterfaceImplementation__;
+CLASS(FileHttpHandler) {
+  _FileHttpHandler.size = sizeof(struct FileHttpHandler);
+  _FileHttpHandler.ctor = __Constructor__;
+  _FileHttpHandler.dtor = __Destructor__;
+  _FileHttpHandler.implof = __InterfaceImplementation__;
 }

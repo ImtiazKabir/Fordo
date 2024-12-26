@@ -1,4 +1,5 @@
 #include "server.h"
+#include "server_prot.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -19,11 +20,13 @@
 #include "imlib/imresult.h"
 #include "imlib/imstdinc.h"
 #include "imlib/imstr.h"
+#include "imlib/imoption.h"
+#include "imlib/iiter.h"
 
 #include "../request/request.h"
 #include "../response/response.h"
 
-#include "../handler/final_handler.h"
+#include "../handler/file_handler.h"
 #include "../handler/ihandler.h"
 #include "../http_mimes/http_mimes.h"
 #include "../http_status/http_status.h"
@@ -35,28 +38,20 @@ IM_DEFINE_ERROR(RequestError, SERR_REQUEST, ServerError)
 IM_DEFINE_ERROR(ResponseError, SERR_RESPONSE, ServerError)
 
 struct IModLog s_logger = {
-    (size_t)-1,
-    {
-        {SLOG_LISTEN, "[LISTEN]", ANSI_BG_DEFAULT, ANSI_FG_GREEN,
-         ANSI_BG_DEFAULT, ANSI_FG_GREEN},
-        {SLOG_ACCEPT, "[ACCEPT]", ANSI_BG_DEFAULT, ANSI_FG_GREEN,
-         ANSI_BG_DEFAULT, ANSI_FG_GREEN},
-        {SLOG_REQUEST, "[REQUEST]", ANSI_BG_DEFAULT, ANSI_FG_YELLOW,
-         ANSI_BG_DEFAULT, ANSI_FG_YELLOW},
-        {SLOG_RESPONSE, "[RESPONSE]", ANSI_BG_DEFAULT, ANSI_FG_MAGENTA,
-         ANSI_BG_DEFAULT, ANSI_FG_MAGENTA},
-        {SLOG_CLOSE, "[CLOSE]", ANSI_BG_DEFAULT, ANSI_FG_RED, ANSI_BG_DEFAULT,
-         ANSI_FG_RED},
-    }};
+  (size_t)-1,
+  {
+    {SLOG_LISTEN, "[LISTEN]", ANSI_BG_DEFAULT, ANSI_FG_GREEN,
+      ANSI_BG_DEFAULT, ANSI_FG_GREEN},
+    {SLOG_ACCEPT, "[ACCEPT]", ANSI_BG_DEFAULT, ANSI_FG_GREEN,
+      ANSI_BG_DEFAULT, ANSI_FG_GREEN},
+    {SLOG_REQUEST, "[REQUEST]", ANSI_BG_DEFAULT, ANSI_FG_YELLOW,
+      ANSI_BG_DEFAULT, ANSI_FG_YELLOW},
+    {SLOG_RESPONSE, "[RESPONSE]", ANSI_BG_DEFAULT, ANSI_FG_MAGENTA,
+      ANSI_BG_DEFAULT, ANSI_FG_MAGENTA},
+    {SLOG_CLOSE, "[CLOSE]", ANSI_BG_DEFAULT, ANSI_FG_RED, ANSI_BG_DEFAULT,
+      ANSI_FG_RED},
+  }};
 
-struct Server {
-  char const *ip_address;
-  unsigned short port;
-  int socket;
-  int client_socket;
-  struct sockaddr_in socket_address;
-  unsigned int socket_address_len;
-};
 
 PRIVATE struct ImStr *ErrorMessage(register char const *const prefix) {
   register struct ImStr *str = imnew(ImStr, 0u);
@@ -111,13 +106,103 @@ PRIVATE void __Destructor__(register void *const _self) {
   Close(self);
 }
 
+PUBLIC void Server_SetHandlerChain(register struct Server *const self, register void *const chain) {
+  self->handler_chain = chain;
+}
+
+PUBLIC void *Server_GetHandlerChain(register struct Server *const self) {
+  return self->handler_chain;
+}
+
+PRIVATE struct HttpResponse *DefaultResponse(void) {
+  register struct HttpResponse *const response = imnew(HttpResponse, 0u);
+  HttpResponse_SetStatusCode(response, HTTP_STATUS_NOT_FOUND);
+  HttpResponse_SetMimeType(response, MIME_TEXT_HTML);
+  ImStr_Append(HttpResponse_GetBody(response), "<h1>404 NOT FOUND!</h1>");
+  HttpResponse_Finalize(response);
+  return response;
+}
+
+PRIVATE struct HttpResponse *GetResponse(register struct HttpRequest *const request, register void *const handler_chain) {
+  register struct HttpResponse *response = NULL;
+
+  response = DefaultResponse();
+
+  if (handler_chain == NULL) {
+    imlog(LOG_WARN, "There is no handler chain setup, all request will be responded with the default response");
+    return response;
+  }
+
+  ImIIter_Reset(handler_chain);
+  while(IM_TRUE) {
+    register struct ImOptPtr const nxt = ImIIter_Next(handler_chain);
+    register void *handler = NULL;
+    register struct ImOptPtr resopt = ImOptPtr_None();
+    if (ImOptPtr_IsNone(nxt) != IM_FALSE) {
+      imlog(LOG_INFO, "No handler found, using default response");
+      break;
+    }
+    handler = ImOptPtr_Unwrap(nxt);
+    resopt = HttpHandler_Handle(handler, request);
+    if (ImOptPtr_IsSome(resopt) != IM_FALSE) {
+      imlog1(LOG_INFO, "Found handler: %s", imtype(handler));
+      (void)imdel(response);
+      response = ImOptPtr_Unwrap(resopt);
+      break;
+    }
+  }
+
+  return response;
+}
+
+PRIVATE void SendResponse(register struct Server *const self, register char const *const reqstr) {
+  register struct HttpRequest *request = NULL;
+  register struct HttpResponse *response = NULL;
+  register char const *res = NULL;
+
+  /*
+  register void *handler = NULL;
+  register struct ImOptPtr resopt = ImOptPtr_None();
+  */
+
+  imlog(LOG_INFO, "Parsing the request");
+  request = imnew(HttpRequest, 1u, PARAM_PTR, reqstr);
+
+  /*
+  handler = imnew(FileHttpHandler, 1u, PARAM_PTR, "public");
+  resopt = HttpHandler_Handle(handler, request);
+  if (ImOptPtr_IsSome(resopt) != IM_FALSE) {
+    response = ImOptPtr_Unwrap(resopt);
+  } else {
+    response = imnew(HttpResponse, 0u);
+    HttpResponse_SetStatusCode(response, HTTP_STATUS_NOT_FOUND);
+    HttpResponse_SetMimeType(response, MIME_TEXT_HTML);
+    ImStr_Append(HttpResponse_GetBody(response), "<h1>404 NOT FOUND!</h1>");
+    HttpResponse_Finalize(response);
+  }
+  res = imtostr(response);
+
+  (void)imdel(handler);
+  */
+
+  response = GetResponse(request, self->handler_chain);
+  res = imtostr(response);
+
+  imodlog(&s_logger, SLOG_RESPONSE, "\n%s\n", res);
+  write(self->client_socket, res, strlen(res));
+
+  (void)imdel(response);
+  (void)imdel(request);
+  (void)imfree((void *)res);
+}
+
 PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
   enum { MAX_QUEUE_LEN = 20 };
 
   if (listen(self->socket, MAX_QUEUE_LEN) < 0) {
     register struct ImStr *const errmsg = ErrorMessage("Listen failed");
     register struct ImError *const error =
-        imnew(ListenError, 1u, PARAM_PTR, ImStr_View(errmsg));
+      imnew(ListenError, 1u, PARAM_PTR, ImStr_View(errmsg));
     register struct ImResVoid result = ImResVoid_Err(error);
     imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
 
@@ -141,13 +226,13 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
     imlog(LOG_INFO, "Waiting for a new connection");
 
     self->client_socket =
-        accept(self->socket, (struct sockaddr *)&self->socket_address,
-               &self->socket_address_len);
+      accept(self->socket, (struct sockaddr *)&self->socket_address,
+             &self->socket_address_len);
 
     if (self->client_socket < 0) {
       register struct ImStr *const errmsg = ErrorMessage("Accept failed");
       register struct ImError *const error =
-          imnew(AcceptError, 1u, PARAM_PTR, ImStr_View(errmsg));
+        imnew(AcceptError, 1u, PARAM_PTR, ImStr_View(errmsg));
       register struct ImResVoid result = ImResVoid_Err(error);
       imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
 
@@ -171,7 +256,7 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
     if (bytes_received < 0) {
       register struct ImStr *const errmsg = ErrorMessage("Read failed");
       register struct ImError *const error =
-          imnew(RequestError, 1u, PARAM_PTR, ImStr_View(errmsg));
+        imnew(RequestError, 1u, PARAM_PTR, ImStr_View(errmsg));
       register struct ImResVoid result = ImResVoid_Err(error);
       imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
 
@@ -180,26 +265,8 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
     }
 
     imodlog(&s_logger, SLOG_REQUEST, "\n%s\n", buffer);
-    imodlog(&s_logger, SLOG_REQUEST, "Parsing the request\n");
 
-    {
-      register struct HttpRequest *const request =
-          imnew(HttpRequest, 1u, PARAM_PTR, buffer);
-      register void *handler = NULL;
-      register struct HttpResponse *response = NULL;
-      register char const *res = NULL;
-
-      handler = imnew(FinalHttpHandler, 1u, PARAM_PTR, "public");
-      response = HttpHandler_Handle(handler, request);
-      res = imtostr(response);
-
-      (void)imdel(handler);
-      (void)imdel(response);
-      (void)imdel(request);
-      imodlog(&s_logger, SLOG_RESPONSE, "\n%s\n", res);
-      write(self->client_socket, res, strlen(res));
-      (void)imfree((void *)res);
-    }
+    SendResponse(self, buffer);
 
     if (client_ip[0] != '\0') {
       imodlog(&s_logger, SLOG_CLOSE, "IP: %s, PORT: %d\n", client_ip,

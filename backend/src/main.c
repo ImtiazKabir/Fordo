@@ -18,6 +18,7 @@
 #include "fordodb/fordodb.h"
 #include "model/todo.h"
 #include "server/server.h"
+#include "fordo_server/fordo_server.h"
 
 static struct Server *server = NULL;
 
@@ -67,7 +68,7 @@ PRIVATE void DBDebug(void) {
 }
 
 PRIVATE void ServerDebug(void) {
-  server = imnew(Server, 2u, PARAM_PTR, "0.0.0.0", PARAM_UNSIGNED_SHORT, 3000u);
+  server = imnew(FordoServer, 2u, PARAM_PTR, "0.0.0.0", PARAM_UNSIGNED_SHORT, 3000u);
 
   ImResVoid_Unwrap(Server_Listen(server));
 
