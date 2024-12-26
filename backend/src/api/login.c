@@ -19,6 +19,11 @@
 #include "../request/request.h"
 #include "../response/response.h"
 #include "../util/file_util.h"
+#include "cJSON/cJSON.h"
+
+PRIVATE char *__dupstr__(register char const *const src) {
+  return strcpy(imalloct("String", (strlen(src) + 1u) * sizeof(char)), src);
+}
 
 
 PRIVATE void __Constructor__(register void *const _self,
@@ -35,16 +40,58 @@ PRIVATE void __Destructor__(register void *const _self) {
   (void)self;
 }
 
+PRIVATE void ParseCredential(register char const *const json_string,
+                             register char const **const username,
+                             register char const **const password) {
+  register cJSON *json = NULL;
+  register cJSON *username_item = NULL;
+  register cJSON *password_item = NULL;
+
+  json = cJSON_Parse(json_string);
+  if (!json) {
+    fprintf(stderr, "Error parsing JSON: %s\n", cJSON_GetErrorPtr());
+    return;
+  }
+
+  username_item = cJSON_GetObjectItem(json, "username");
+  if (cJSON_IsString(username_item)) {
+    *username = __dupstr__(username_item->valuestring);
+  } else {
+    imlogf(LOG_ERROR, stderr, "'username' field is missing or not a string\n");
+    *username = NULL;
+  }
+
+  password_item = cJSON_GetObjectItem(json, "password");
+  if (cJSON_IsString(password_item)) {
+    *password = __dupstr__(password_item->valuestring);
+  } else {
+    imlogf(LOG_ERROR, stderr, "'password' field is missing or not a string");
+    *password = NULL;
+  }
+
+  cJSON_Delete(json);
+  return;
+}
+
+
 PRIVATE struct ImOptPtr
 __Handle__(register void *const _self,
            register struct HttpRequest *const request) {
   register struct FileHttpHandler *const self = _self;
   register struct HttpResponse *response = NULL;
+  auto char const *username = NULL;
+  auto char const *password = NULL;
+
   (void)self;
 
   if (strcmp(HttpRequest_GetPath(request), "/api/login") != 0) {
     return ImOptPtr_None();
   }
+
+  ParseCredential(HttpRequest_GetBody(request), &username, &password);
+  imlog2(LOG_INFO, "Username: %s, Password: %s", username, password);
+  (void)imfree((void *)username);
+  (void)imfree((void *)password);
 
   response = imnew(HttpResponse, 0u);
   HttpResponse_SetMimeType(response, MIME_APPLICATION_JSON);

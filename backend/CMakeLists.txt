@@ -32,4 +32,5 @@ target_link_options(main PRIVATE -fsanitize=address,undefined,leak,null,alignmen
 target_link_libraries(main PRIVATE imlib)
 target_link_libraries(main PRIVATE sqlite3)
 target_link_libraries(main PRIVATE phr)
+target_link_libraries(main PRIVATE cjson)
 
