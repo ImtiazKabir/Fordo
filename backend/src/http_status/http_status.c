@@ -1,6 +1,6 @@
 #include "http_status.h"
 
-int const httpStatusCodes[] = {
+int const http_status_codes[] = {
     /* 1xx Informational */
     100, 101, 102,
     
@@ -17,7 +17,7 @@ int const httpStatusCodes[] = {
     500, 501, 502, 503, 504, 505, 507, 508, 510, 511
 };
 
-char const *const httpStatusMessages[] = {
+char const *const http_status_messages[] = {
     /* 1xx Informational */
     "Continue", "Switching Protocols", "Processing",
     

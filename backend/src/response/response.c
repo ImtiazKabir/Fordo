@@ -41,7 +41,7 @@ PRIVATE void __Constructor__(register void *const _self, register struct ImParam
   self->body = imnew(ImStr, 0u);
 
   self->minor_version = 1;
-  self->status_code = OK;
+  self->status_code = HTTP_STATUS_OK;
 }
 
 PRIVATE void __Destructor__(register void *const _self) {
@@ -66,8 +66,6 @@ PUBLIC void HttpResponse_AddHeader(
   register struct HttpResponse *const self,
   register struct ImStr const *const header_key,
   register struct ImStr *const header_value) {
-  imlog1(LOG_DEBUG, "key: %obj", header_key);
-  imlog1(LOG_DEBUG, "value: %obj", header_value);
   ImIMap_AddOrReplace(self->header_map, header_key, header_value);
 }
 
@@ -90,6 +88,16 @@ PUBLIC void HttpResponse_Finalize(register struct HttpResponse *const self) {
   HttpResponse_AddHeader(self, key, val);
 }
 
+PUBLIC void HttpResponse_SetMimeType(
+  register struct HttpResponse *const self,
+  register enum MimeType const mime) {
+  register struct ImStr *const key = imnew(ImStr, 1u, PARAM_PTR, "Content-Type");
+  register struct ImStr *const val = imnew(ImStr, 0u);
+  ImStr_AppendFmt(val, "%s/%s", mime_types[mime], mime_subtypes[mime]);
+  HttpResponse_AddHeader(self, key, val);
+}
+
+
 PRIVATE void HeaderAppend(register void *const _pair, register void *const _str) {
   register struct ImPair *const pair = _pair;
   register struct ImStr *const str = _str;
@@ -108,7 +116,7 @@ PRIVATE char *ToStr(register void const *const _self) {
   register struct ImStr *const sb = imnew(ImStr, 0u);
 
   ImStr_AppendFmt(sb, "HTTP/1.%d", self->minor_version);
-  ImStr_AppendFmt(sb, " %d %s", httpStatusCodes[self->status_code], httpStatusMessages[self->status_code]);
+  ImStr_AppendFmt(sb, " %d %s", http_status_codes[self->status_code], http_status_messages[self->status_code]);
   ImStr_Append(sb, "\r\n");
   
   {

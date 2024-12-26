@@ -23,6 +23,9 @@
 #include "../request/request.h"
 #include "../response/response.h"
 
+#include "../http_status/http_status.h"
+#include "../http_mimes/http_mimes.h"
+
 IM_DEFINE_ERROR(ServerError, SERR_ERR, "Internal server error")
 IM_DEFINE_ERROR(ListenError, SERR_LISTEN, "Listen error")
 IM_DEFINE_ERROR(AcceptError, SERR_ACCEPT, "Accept error")
@@ -38,8 +41,8 @@ struct IModLog s_logger = {
          ANSI_FG_GREEN},
         {SLOG_REQUEST, "[REQUEST]", ANSI_BG_DEFAULT, ANSI_FG_YELLOW, ANSI_BG_DEFAULT,
          ANSI_FG_YELLOW},
-        {SLOG_RESPONSE, "[RESPONSE]", ANSI_BG_DEFAULT, ANSI_FG_YELLOW, ANSI_BG_DEFAULT,
-         ANSI_FG_YELLOW},
+        {SLOG_RESPONSE, "[RESPONSE]", ANSI_BG_DEFAULT, ANSI_FG_MAGENTA, ANSI_BG_DEFAULT,
+         ANSI_FG_MAGENTA},
         {SLOG_CLOSE, "[CLOSE]", ANSI_BG_DEFAULT, ANSI_FG_RED,
          ANSI_BG_DEFAULT, ANSI_FG_RED},
     }};
@@ -181,8 +184,8 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
       register struct HttpResponse *const response = imnew(HttpResponse, 0u);
       register char const *res = NULL;
 
-      HttpResponse_AddHeaderCstr(response, "Content-Type", "text/plain");
-      ImStr_Append(HttpResponse_GetBody(response), "Hello world");
+      HttpResponse_SetMimeType(response, MIME_TEXT_HTML);
+      ImStr_Append(HttpResponse_GetBody(response), "<h1>Imlib is the best</h1>");
       HttpResponse_Finalize(response);
       res = imtostr(response);
       (void)imdel(response);
