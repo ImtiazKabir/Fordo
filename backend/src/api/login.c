@@ -70,7 +70,18 @@ PRIVATE void ParseCredential(register char const *const json_string,
   }
 
   cJSON_Delete(json);
-  return;
+}
+
+PRIVATE char const *GetSuccessJsonWithUserId(register int const user_id) {
+  register cJSON *const json = cJSON_CreateObject();
+  register char const *ret = NULL;
+
+  cJSON_AddStringToObject(json, "success", "true");
+  cJSON_AddNumberToObject(json, "user_id", user_id);
+
+  ret = cJSON_Print(json);
+  cJSON_Delete(json);
+  return ret;
 }
 
 
@@ -90,12 +101,18 @@ __Handle__(register void *const _self,
 
   ParseCredential(HttpRequest_GetBody(request), &username, &password);
   imlog2(LOG_INFO, "Username: %s, Password: %s", username, password);
+
   (void)imfree((void *)username);
   (void)imfree((void *)password);
 
   response = imnew(HttpResponse, 0u);
   HttpResponse_SetMimeType(response, MIME_APPLICATION_JSON);
-  ImStr_Append(HttpResponse_GetBody(response), "{\"user_id\": 456}");
+
+  {
+    register char const *const json = GetSuccessJsonWithUserId(415);
+    ImStr_Append(HttpResponse_GetBody(response), json);
+    free((void *)json);
+  }
   HttpResponse_Finalize(response);
   return ImOptPtr_Some(response);
 }
