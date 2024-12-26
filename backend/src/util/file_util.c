@@ -5,6 +5,7 @@
 
 #include "imlib/imstdinc.h"
 #include "imlib/impanic.h"
+#include "imlib/immem.h"
 
 PUBLIC size_t SizeOfFile(register FILE *const fp) {
   register long size = 0u;
@@ -23,7 +24,7 @@ PUBLIC char *ReadEntireFile(register char const *const file) {
 
   NEQ(fp = fopen(file, "r"), NULL);
   size = SizeOfFile(fp);
-  NEQ(content = calloc(1u + size, sizeof(*content)), NULL);
+  content = imalloct("String", (1u + size) * sizeof(*content));
   NEQ(fread(content, sizeof(*content), size, fp), 0);
   EQ(fclose(fp), 0);
   content[size] = '\0';

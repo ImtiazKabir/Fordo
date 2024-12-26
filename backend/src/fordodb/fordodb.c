@@ -102,34 +102,13 @@ PRIVATE void __Destructor__(register void *const _self) {
   register struct FordoDB *const self = _self;
 
   imlog(LOG_INFO, "Cleaning up database");
-
-  if (self->foreign_key_script != NULL) {
-    free((void *)self->foreign_key_script);
-  }
-
-  if (self->add_user_script != NULL) {
-    free((void *)self->add_user_script);
-  }
-  
-  if (self->add_todo_script != NULL) {
-    free((void *)self->add_todo_script);
-  }
-
-  if (self->get_user_id_script != NULL) {
-    free((void *)self->get_user_id_script);
-  }
-
-  if (self->get_todos_script != NULL) {
-    free((void *)self->get_todos_script);
-  }
-
-  if (self->delete_todo_script != NULL) {
-    free((void *)self->delete_todo_script);
-  }
-
-  if (self->toggle_todo_script != NULL) {
-    free((void *)self->toggle_todo_script);
-  }
+  imfree((void *)self->foreign_key_script);
+  imfree((void *)self->add_user_script);
+  imfree((void *)self->add_todo_script);
+  imfree((void *)self->get_user_id_script);
+  imfree((void *)self->get_todos_script);
+  imfree((void *)self->delete_todo_script);
+  imfree((void *)self->toggle_todo_script);
 
   EQ(sqlite3_close(self->db), SQLITE_OK);
 }
