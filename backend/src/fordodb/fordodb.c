@@ -15,6 +15,7 @@
 #include <sqlite3.h>
 
 #include "../model/todo.h"
+#include "../util/file_util.h"
 
 IM_DEFINE_ERROR(DatabaseError, DB_ERR, "Internal database error")
 IM_DEFINE_ERROR(PrepareError, DB_PREP, "Could not prepare statement")
@@ -44,31 +45,6 @@ struct IModLog db_logger = {
         {DB_UPDATE, "[UPDATE]", ANSI_BG_DEFAULT, ANSI_FG_YELLOW,
          ANSI_BG_DEFAULT, ANSI_FG_YELLOW},
     }};
-
-PRIVATE size_t SizeOfFile(register FILE *const fp) {
-  register long size = 0u;
-
-  NEQ(fseek(fp, 0, SEEK_END), -1);
-  NEQ(size = ftell(fp), -1);
-  NEQ(fseek(fp, 0, SEEK_SET), -1);
-
-  return (size_t)size;
-}
-
-PRIVATE char *ReadEntireFile(register char const *const file) {
-  register FILE *fp = NULL;
-  register char *content = NULL;
-  register size_t size = 0;
-
-  NEQ(fp = fopen(file, "r"), NULL);
-  size = SizeOfFile(fp);
-  NEQ(content = calloc(1u + size, sizeof(*content)), NULL);
-  NEQ(fread(content, sizeof(*content), size, fp), 0);
-  EQ(fclose(fp), 0);
-  content[size] = '\0';
-
-  return content;
-}
 
 PRIVATE struct ImStr *ErrorMessage(register sqlite3 *const db,
                                    register char const *const prefix) {
