@@ -1,6 +1,8 @@
 #ifndef HTTP_STATUS_H_
 #define HTTP_STATUS_H_
 
+#include "imlib/imstdinc.h"
+
 /* Enum for HTTP status codes */
 enum HttpStatusCode {
   HTTP_STATUS_CONTINUE,
@@ -54,12 +56,12 @@ enum HttpStatusCode {
   HTTP_STATUS_INSUFFICIENT_STORAGE,
   HTTP_STATUS_LOOP_DETECTED,
   HTTP_STATUS_NOT_EXTENDED,
-  HTTP_STATUS_NETWORK_AUTHENTICATION_REQUIRED
+  HTTP_STATUS_NETWORK_AUTHENTICATION_REQUIRED,
+  HTTP_STATUS_UNKNOWN
 };
 
-/* External declarations for variables */
-
-extern int const http_status_codes[];
-extern char const *const http_status_messages[];
+PUBLIC int GetHttpStatusCode(enum HttpStatusCode status);
+PUBLIC char const *GetHttpStatusMessage(enum HttpStatusCode status);
+PUBLIC char const *GetHttpStatus(enum HttpStatusCode status);
 
 #endif /* !HTTP_STATUS_H_ */

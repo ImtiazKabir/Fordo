@@ -1,6 +1,8 @@
 #ifndef HTTP_MIMES_H_
 #define HTTP_MIMES_H_
 
+#include "imlib/imstdinc.h"
+
 enum MimeType {
   MIME_TEXT_PLAIN,
   MIME_TEXT_HTML,
@@ -16,11 +18,14 @@ enum MimeType {
   MIME_VIDEO_WEBM,
   MIME_AUDIO_MP3,
   MIME_AUDIO_OGG,
-  MIME_MULTIPART_FORM_DATA
+  MIME_MULTIPART_FORM_DATA,
+  MIME_UNKNOWN
 };
 
-extern char const *const mime_types[];
-extern char const *const mime_subtypes[];
+PUBLIC char const *GetContentTypeStr(enum MimeType mime);
+PUBLIC char const *GetMimeTypeStr(enum MimeType mime);
+PUBLIC char const *GetMimeSubtypeStr(enum MimeType mime);
+PUBLIC enum MimeType GetMimeTyeFromPath(char const *path);
 
 #endif /* !HTTP_MIMES_H_ */
 

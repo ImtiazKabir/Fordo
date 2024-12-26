@@ -71,10 +71,12 @@ PUBLIC void HttpResponse_AddHeader(
 
 PUBLIC void HttpResponse_AddHeaderCstr(
   register struct HttpResponse *const self,
-  register char const *const key,
-  register char const *const value
+  register char const *const _key,
+  register char const *const _value
 ) {
-  HttpResponse_AddHeader(self, imnew(ImStr, 1u, PARAM_PTR, key), imnew(ImStr, 1u, PARAM_PTR, value));
+  register struct ImStr *const key = imnew(ImStr, 1u, PARAM_PTR, _key);
+  register struct ImStr *const val = imnew(ImStr, 1u, PARAM_PTR, _value);
+  HttpResponse_AddHeader(self, key, val);
 }
 
 PUBLIC struct ImStr *HttpResponse_GetBody(register struct HttpResponse *const self) {
@@ -92,8 +94,7 @@ PUBLIC void HttpResponse_SetMimeType(
   register struct HttpResponse *const self,
   register enum MimeType const mime) {
   register struct ImStr *const key = imnew(ImStr, 1u, PARAM_PTR, "Content-Type");
-  register struct ImStr *const val = imnew(ImStr, 0u);
-  ImStr_AppendFmt(val, "%s/%s", mime_types[mime], mime_subtypes[mime]);
+  register struct ImStr *const val = imnew(ImStr, 1u, PARAM_PTR, GetContentTypeStr(mime));
   HttpResponse_AddHeader(self, key, val);
 }
 
@@ -116,7 +117,7 @@ PRIVATE char *ToStr(register void const *const _self) {
   register struct ImStr *const sb = imnew(ImStr, 0u);
 
   ImStr_AppendFmt(sb, "HTTP/1.%d", self->minor_version);
-  ImStr_AppendFmt(sb, " %d %s", http_status_codes[self->status_code], http_status_messages[self->status_code]);
+  ImStr_AppendFmt(sb, " %s", GetHttpStatus(self->status_code));
   ImStr_Append(sb, "\r\n");
   
   {
