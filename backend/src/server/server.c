@@ -189,7 +189,7 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
       register struct HttpResponse *response = NULL;
       register char const *res = NULL;
 
-      handler = imnew(FinalHttpHandler, 0u);
+      handler = imnew(FinalHttpHandler, 1u, PARAM_PTR, "public");
       response = HttpHandler_Handle(handler, request);
       res = imtostr(response);
 

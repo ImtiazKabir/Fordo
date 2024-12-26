@@ -4,7 +4,7 @@
 #include "imlib/imclass.h"
 
 struct FinalHttpHandler {
-  char unused;
+  char const *public_path;
 };
 
 extern struct ImClass *const FinalHttpHandler;

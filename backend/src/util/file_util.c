@@ -1,11 +1,11 @@
 #include "file_util.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "imlib/imstdinc.h"
-#include "imlib/impanic.h"
 #include "imlib/immem.h"
+#include "imlib/impanic.h"
+#include "imlib/imstdinc.h"
 
 PUBLIC size_t SizeOfFile(register FILE *const fp) {
   register long size = 0u;
