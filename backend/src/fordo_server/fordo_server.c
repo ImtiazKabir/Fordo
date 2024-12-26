@@ -13,6 +13,7 @@
 #include "imlib/imlog.h"
 
 #include "../handler/file_handler.h"
+#include "../api/login.h"
 
 #include "../fordodb/fordodb.h"
 
@@ -32,23 +33,23 @@ PRIVATE void __Constructor__(register void *const _self,
   self->handler_list = imnew(ImLinkedList, 0u);
   ImIList_SetPolicy(self->handler_list, POLICY_TRANSFER);
 
+  self->db = imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
+
   imlog(LOG_INFO, "Instantiating all handlers");
   ImIList_Append(self->handler_list, imnew(FileHttpHandler, 1u, PARAM_PTR, "public"));
-
-  self->handler_iter = imnew(ImLLIter, 1u, PARAM_PTR, self->handler_list);
+  ImIList_Append(self->handler_list, imnew(LoginApiHandler, 1u, PARAM_PTR, self->db));
 
   imlog(LOG_INFO, "Registering all handlers");
+  self->handler_iter = imnew(ImLLIter, 1u, PARAM_PTR, self->handler_list);
   Server_SetHandlerChain(&self->server, self->handler_iter);
-
-  self->db = imnew(FordoDB, 1u, PARAM_PTR, "database/fordo.db");
 }
 
 PRIVATE void __Destructor__(register void *const _self) {
   register struct FordoServer *const self = _self;
+  (void)imdel(self->db);
+
   (void)imdel(self->handler_iter);
   (void)imdel(self->handler_list);
-
-  (void)imdel(self->db);
 }
 
 PRIVATE void __SuperParams__(register struct ImParams *sup_args,

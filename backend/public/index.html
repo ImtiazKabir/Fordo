@@ -1,13 +1,21 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <script src="index.js"></script>
-  </head>
-  <body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Form</title>
+</head>
+<body>
+  <form id="login-form">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br><br>
+    <button type="submit">Login</button>
+  </form>
+  <script src="login.js"></script>
+</body>
+</html>
 
-    <h1>Welcome to Fordo</h1>
-    <p>A todo app done differently</p>
-    <a href="/login">Login</a>
-
-  </body>
-</html> 
