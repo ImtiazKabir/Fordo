@@ -14,6 +14,7 @@
 
 #include "../handler/file_handler.h"
 #include "../api/login.h"
+#include "../api/signup.h"
 
 #include "../fordodb/fordodb.h"
 
@@ -38,6 +39,7 @@ PRIVATE void __Constructor__(register void *const _self,
   imlog(LOG_INFO, "Instantiating all handlers");
   ImIList_Append(self->handler_list, imnew(FileHttpHandler, 1u, PARAM_PTR, "public"));
   ImIList_Append(self->handler_list, imnew(LoginApiHandler, 1u, PARAM_PTR, self->db));
+  ImIList_Append(self->handler_list, imnew(SignupApiHandler, 1u, PARAM_PTR, self->db));
 
   imlog(LOG_INFO, "Registering all handlers");
   self->handler_iter = imnew(ImLLIter, 1u, PARAM_PTR, self->handler_list);
