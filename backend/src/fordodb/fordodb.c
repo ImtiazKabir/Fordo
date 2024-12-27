@@ -33,6 +33,7 @@ struct FordoDB {
   char const *get_user_id_script;
   char const *get_todos_script;
   char const *toggle_todo_script;
+  char const *get_uid_of_todo_script;
 };
 
 struct IModLog db_logger = {
@@ -93,6 +94,8 @@ PRIVATE void __Constructor__(register void *const _self, register struct ImParam
   NEQ(self->delete_todo_script = ReadEntireFile("database/delete_todo.sql"), NULL);
   NEQ(self->toggle_todo_script = ReadEntireFile("database/toggle_todo.sql"),
       NULL);
+  NEQ(self->get_uid_of_todo_script = ReadEntireFile("database/get_uid_of_todo.sql"),
+      NULL);
 
   imlog(LOG_INFO, "Enabling constraints");
   EnableForeignKeyConstraint(self);
@@ -109,6 +112,7 @@ PRIVATE void __Destructor__(register void *const _self) {
   imfree((void *)self->get_todos_script);
   imfree((void *)self->delete_todo_script);
   imfree((void *)self->toggle_todo_script);
+  imfree((void *)self->get_uid_of_todo_script);
 
   EQ(sqlite3_close(self->db), SQLITE_OK);
 }
@@ -312,6 +316,33 @@ PUBLIC struct ImResPtr FordoDB_GetAllTodo(register struct FordoDB *const self,
 
   sqlite3_finalize(stmt);
   return ImResPtr_Ok(todos);
+}
+
+PUBLIC struct ImResInt FordoDB_GetUidOfTodo(register struct FordoDB *const self,
+                                            register int const todo_id) {
+  auto sqlite3_stmt *stmt = NULL;
+  register char const *const script = self->get_uid_of_todo_script;
+  register sqlite3 *const db = self->db;
+
+  RESULT_TRY(ImResVoid, PrepareStatement(db, script, &stmt), ImResInt);
+  RESULT_TRY(ImResVoid, BindInt(db, stmt, 1, todo_id, "Failed to bind todo_id"), ImResInt);
+
+  if (sqlite3_step(stmt) != SQLITE_ROW) {
+    register char const *const errmsg = "Invalid todo id";
+    register struct ImError *const error =
+        imnew(ExecuteError, 1u, PARAM_PTR, errmsg);
+    register struct ImResInt result = ImResInt_Err(error);
+    imlogf(LOG_ERROR, stderr, errmsg);
+
+    sqlite3_finalize(stmt);
+    return result;
+  }
+
+  {
+    register int const user_id = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    return ImResInt_Ok(user_id);
+  }
 }
 
 
