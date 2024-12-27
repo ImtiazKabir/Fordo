@@ -8,6 +8,8 @@
 #include "imlib/immem.h"
 #include "imlib/imstr.h"
 
+#include "cJSON/cJSON.h"
+
 #include <string.h>
 
 PRIVATE char *__dupstr__(register char const *const src) {
@@ -51,6 +53,14 @@ PRIVATE char *__tostr__(register void const *const _self) {
   imdel(str);
 
   return ret;
+}
+
+PUBLIC cJSON *ToJson(register struct Todo const *const self) {
+  register cJSON *const json = cJSON_CreateObject();
+  cJSON_AddNumberToObject(json, "id", self->id);
+  cJSON_AddStringToObject(json, "todo_text", self->text);
+  cJSON_AddBoolToObject(json, "is_done", self->is_done);
+  return json;
 }
 
 CLASS(Todo) {

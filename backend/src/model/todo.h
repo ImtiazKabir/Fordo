@@ -3,6 +3,8 @@
 
 #include "imlib/imclass.h"
 
+#include "cJSON/cJSON.h"
+
 struct Todo {
   int id;
   char const *text;
@@ -11,6 +13,7 @@ struct Todo {
 
 extern struct ImClass *const Todo;
 
+PUBLIC cJSON *ToJson(struct Todo const *self);
 
 #endif /* !TODO_H_ */
 
