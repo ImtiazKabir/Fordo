@@ -55,7 +55,7 @@ PRIVATE char *__tostr__(register void const *const _self) {
   return ret;
 }
 
-PUBLIC cJSON *ToJson(register struct Todo const *const self) {
+PUBLIC cJSON *Todo_ToJson(register struct Todo const *const self) {
   register cJSON *const json = cJSON_CreateObject();
   cJSON_AddNumberToObject(json, "id", self->id);
   cJSON_AddStringToObject(json, "todo_text", self->text);

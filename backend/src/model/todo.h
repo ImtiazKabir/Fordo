@@ -13,7 +13,7 @@ struct Todo {
 
 extern struct ImClass *const Todo;
 
-PUBLIC cJSON *ToJson(struct Todo const *self);
+PUBLIC cJSON *Todo_ToJson(struct Todo const *self);
 
 #endif /* !TODO_H_ */
 
