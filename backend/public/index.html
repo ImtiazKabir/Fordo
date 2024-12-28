@@ -1,21 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Form</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fordo - Get Started</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/global.css">
 </head>
 <body>
-  <form id="login-form">
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required>
-    <br><br>
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required>
-    <br><br>
-    <button type="submit">Login</button>
-  </form>
-  <script src="login.js"></script>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">Fordo</a>
+    </nav>
+
+    <div class="content-body">
+        <section class="main-content">
+            <div class="title-card">
+                <h1>Welcome to Fordo!</h1>
+                <p>Your simple and efficient todo app.</p>
+                <a href="login.html" class="btn">Get Started</a>
+            </div>
+            
+            <div class="cards-container">
+               <div class="description-card">
+    <h2>About Fordo</h2>
+    <ul>
+        <li>📁 <strong>Open-source:</strong> Fordo is an open-source todo app built around simplicity.</li>
+        <li>💻 <strong>Written in ANSI C:</strong> The entire backend is built in ANSI C, utilizing SQLite3 and 'imlib', a custom OOP library by the author.</li>
+        <li>⚙️ <strong>Flexible Server:</strong> The project demonstrates that ANSI C can still be powerful, with a system call-based C server that mimics Express.js functionality.</li>
+        <li>🔧 <strong>Pedantic Design:</strong> Built with abstractions, inheritance, and error handling—all in pedantic ANSI C.</li>
+        <li>🎨 <strong>Beautiful Frontend:</strong> The frontend uses vanilla JavaScript and CSS to complement the clean design.</li>
+        <li>🔗 <strong>GitHub:</strong> <a href="https://github.com/ImtiazKabir/Fordo" target="_blank" class="link">Check out the project on GitHub</a></li>
+    </ul>
+</div> 
+            <div class="description-card">
+    <h2>About Imlib</h2>
+    <ul>
+        <li>🔧 <strong>Custom OOP Library:</strong> Imlib was created to showcase the power of ANSI C with full support for OOP features.</li>
+        <li>📐 <strong>Object-Oriented Power:</strong> Imlib recreates all the fundamental pillars of OOP with enhanced flexibility.</li>
+        <li>🔄 <strong>Design Patterns:</strong> Easily implements design patterns, making complex coding more manageable.</li>
+        <li>💡 <strong>Modern Features:</strong> Features like runtime polymorphism, error handling, and thread-safe logging enhance the coding experience.</li>
+        <li>🛠️ <strong>Standard Containers:</strong> Includes implementations for containers like LinkedLists, HashMaps, and StringBuilders with inheritance support.</li>
+        <li>📚 <strong>GitHub:</strong> <a href="https://github.com/ImtiazKabir/imlib" target="_blank" class="link">Explore Imlib on GitHub</a></li>
+    </ul>
+</div>
+        </section>
+    </div>
+
+    <footer>
+      <p>Created by <a href="https://github.com/ImtiazKabir" target="_blank" class="link">Imtiaz Kabir</a> | BUET CSE'20</p>
+    </footer>
 </body>
 </html>
 

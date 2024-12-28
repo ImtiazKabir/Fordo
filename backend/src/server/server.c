@@ -160,31 +160,8 @@ PRIVATE void SendResponse(register struct Server *const self, register char cons
   register struct HttpResponse *response = NULL;
   register char const *res = NULL;
 
-  /*
-  register void *handler = NULL;
-  register struct ImOptPtr resopt = ImOptPtr_None();
-  */
-
   imlog(LOG_INFO, "Parsing the request");
   request = imnew(HttpRequest, 1u, PARAM_PTR, reqstr);
-
-  /*
-  handler = imnew(FileHttpHandler, 1u, PARAM_PTR, "public");
-  resopt = HttpHandler_Handle(handler, request);
-  if (ImOptPtr_IsSome(resopt) != IM_FALSE) {
-    response = ImOptPtr_Unwrap(resopt);
-  } else {
-    response = imnew(HttpResponse, 0u);
-    HttpResponse_SetStatusCode(response, HTTP_STATUS_NOT_FOUND);
-    HttpResponse_SetMimeType(response, MIME_TEXT_HTML);
-    ImStr_Append(HttpResponse_GetBody(response), "<h1>404 NOT FOUND!</h1>");
-    HttpResponse_Finalize(response);
-  }
-  res = imtostr(response);
-
-  (void)imdel(handler);
-  */
-
   response = GetResponse(request, self->handler_chain);
   res = imtostr(response);
 
@@ -252,8 +229,9 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
              strerror(errno));
     }
 
-    bytes_received = read(self->client_socket, buffer, sizeof(buffer));
-    if (bytes_received < 0) {
+    bytes_received = recv(self->client_socket, buffer, sizeof(buffer), 0);
+    if (bytes_received <= 0) {
+      /*
       register struct ImStr *const errmsg = ErrorMessage("Read failed");
       register struct ImError *const error =
         imnew(RequestError, 1u, PARAM_PTR, ImStr_View(errmsg));
@@ -262,6 +240,12 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
 
       imdel(errmsg);
       return result;
+      */
+      register struct ImStr *const errmsg = ErrorMessage("Read failed");
+      imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
+      (void)imdel(errmsg);
+      close(self->client_socket);
+      continue;
     }
 
     imodlog(&s_logger, SLOG_REQUEST, "\n%s\n", buffer);
