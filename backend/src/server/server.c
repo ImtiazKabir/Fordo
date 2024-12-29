@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "imlib/ansi.h"
@@ -215,6 +216,7 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
 
       imdel(errmsg);
       return result;
+      continue;
     }
 
     /* get peer info for logging */
@@ -231,21 +233,11 @@ PUBLIC struct ImResVoid Server_Listen(register struct Server *const self) {
 
     bytes_received = recv(self->client_socket, buffer, sizeof(buffer), 0);
     if (bytes_received <= 0) {
-      /*
-      register struct ImStr *const errmsg = ErrorMessage("Read failed");
-      register struct ImError *const error =
-        imnew(RequestError, 1u, PARAM_PTR, ImStr_View(errmsg));
-      register struct ImResVoid result = ImResVoid_Err(error);
-      imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
-
-      imdel(errmsg);
-      return result;
-      */
-      register struct ImStr *const errmsg = ErrorMessage("Read failed");
-      imlogf(LOG_ERROR, stderr, ImStr_View(errmsg));
-      (void)imdel(errmsg);
+      imlog(LOG_WARN, "Client closed the connection");
       close(self->client_socket);
       continue;
+    } else if (bytes_received == sizeof(buffer)) {
+      imlog(LOG_WARN, "The buffer got full with this request, maybe not the entire request?");
     }
 
     imodlog(&s_logger, SLOG_REQUEST, "\n%s\n", buffer);

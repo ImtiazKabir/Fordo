@@ -13,6 +13,7 @@ static char const *const mime_types[] = {
   "image",        /* MIME_IMAGE_PNG */
   "image",        /* MIME_IMAGE_JPEG */
   "image",        /* MIME_IMAGE_GIF */
+  "image",        /* MIME_IMAGE_XICON */
   "video",        /* MIME_VIDEO_MP4 */
   "video",        /* MIME_VIDEO_WEBM */
   "audio",        /* MIME_AUDIO_MP3 */
@@ -32,6 +33,7 @@ static char const *const mime_subtypes[] = {
   "png",                /* MIME_IMAGE_PNG */
   "jpeg",               /* MIME_IMAGE_JPEG */
   "gif",                /* MIME_IMAGE_GIF */
+  "x-icon",             /* MIME_IMAGE_XICON */
   "mp4",                /* MIME_VIDEO_MP4 */
   "webm",               /* MIME_VIDEO_WEBM */
   "mp3",                /* MIME_AUDIO_MP3 */
@@ -51,6 +53,7 @@ static char const *const content_type[] = {
   "image/png",                      /* MIME_IMAGE_PNG */
   "image/jpeg",                     /* MIME_IMAGE_JPEG */
   "image/gif",                      /* MIME_IMAGE_GIF */
+  "image/x-icon",                   /* MIME_IMAGE_XICON */
   "video/mp4",                      /* MIME_VIDEO_MP4 */
   "video/webm",                     /* MIME_VIDEO_WEBM */
   "audio/mp3",                      /* MIME_AUDIO_MP3 */
@@ -102,6 +105,8 @@ PUBLIC enum MimeType GetMimeTyeFromPath(char const *path) {
     return MIME_IMAGE_JPEG;
   } else if (strcmp(ext, ".gif") == 0) {
     return MIME_IMAGE_GIF;
+  } else if (strcmp(ext, ".ico") == 0) {
+    return MIME_IMAGE_XICON;
   } else if (strcmp(ext, ".mp4") == 0) {
     return MIME_VIDEO_MP4;
   } else if (strcmp(ext, ".webm") == 0) {
